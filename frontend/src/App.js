@@ -49,11 +49,11 @@ const AppRoutes = () => {
       />
       <Route
         path="/coach"
-        element=(
+        element={
           <ProtectedRoute allowedRoles={['coach', 'super_admin']}>
             <CoachDashboard />
           </ProtectedRoute>
-        )
+        }
       />
       <Route
         path="/athlete"
