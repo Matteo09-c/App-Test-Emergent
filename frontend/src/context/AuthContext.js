@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { setAuthToken } from '../utils/api';
 
 const AuthContext = createContext(null);
 
@@ -20,6 +21,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
+      setAuthToken(token);
       fetchUser();
     } else {
       setLoading(false);
@@ -45,6 +47,7 @@ export const AuthProvider = ({ children }) => {
     const { token: newToken, user: userData } = response.data;
     localStorage.setItem('token', newToken);
     setToken(newToken);
+    setAuthToken(newToken);
     setUser(userData);
     return userData;
   };
@@ -54,6 +57,7 @@ export const AuthProvider = ({ children }) => {
     const { token: newToken, user: newUser } = response.data;
     localStorage.setItem('token', newToken);
     setToken(newToken);
+    setAuthToken(newToken);
     setUser(newUser);
     return newUser;
   };
@@ -62,6 +66,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
+    setAuthToken(null);
   };
 
   const getAuthHeader = () => ({
