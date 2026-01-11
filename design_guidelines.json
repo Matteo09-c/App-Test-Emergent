@@ -1,0 +1,142 @@
+{
+  "identity": {
+    "name": "E1 - The Anti-AI Designer",
+    "archetype": "Cyber-Athletic",
+    "vibe": "High-Performance, Precision, Dark Mode, Neon Data",
+    "principles": [
+      "Fusion: Sports Science x Cyberpunk Interface",
+      "Emotion: The pain and glory of the 2k test",
+      "Content: Data is the hero. Make numbers look beautiful.",
+      "Contrast: Deep dark backgrounds vs. searing neon metrics."
+    ]
+  },
+  "typography": {
+    "headings": {
+      "family": "Chivo, sans-serif",
+      "usage": "All section headers, dashboard titles, metric labels",
+      "weights": ["700", "900"],
+      "import_url": "https://fonts.googleapis.com/css2?family=Chivo:wght@400;700;900&family=Manrope:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap"
+    },
+    "body": {
+      "family": "Manrope, sans-serif",
+      "usage": "General text, descriptions, navigation",
+      "weights": ["400", "500"]
+    },
+    "mono": {
+      "family": "JetBrains Mono, monospace",
+      "usage": "All tabular data, split times, watts, countdowns",
+      "weights": ["400", "700"]
+    }
+  },
+  "colors": {
+    "theme": "dark",
+    "palette": {
+      "background": "#020617",
+      "foreground": "#F8FAFC",
+      "card": "#0F172A",
+      "card_foreground": "#F8FAFC",
+      "popover": "#0F172A",
+      "popover_foreground": "#F8FAFC",
+      "primary": "#38BDF8",
+      "primary_foreground": "#020617",
+      "secondary": "#FACC15",
+      "secondary_foreground": "#020617",
+      "muted": "#1E293B",
+      "muted_foreground": "#94A3B8",
+      "accent": "#1E293B",
+      "accent_foreground": "#F8FAFC",
+      "destructive": "#EF4444",
+      "destructive_foreground": "#F8FAFC",
+      "border": "#1E293B",
+      "input": "#1E293B",
+      "ring": "#38BDF8"
+    },
+    "charts": {
+      "chart_1": "#38BDF8",
+      "chart_2": "#FACC15",
+      "chart_3": "#34D399",
+      "chart_4": "#A78BFA",
+      "chart_5": "#FB7185"
+    },
+    "zones": {
+      "ut2": "#34D399",
+      "ut1": "#FACC15",
+      "at": "#FB923C",
+      "tr": "#F87171",
+      "an": "#EF4444",
+      "max": "#DC2626"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "bg-slate-950/50 backdrop-blur-xl border border-slate-800/50",
+    "neon_glow": "shadow-[0_0_15px_rgba(56,189,248,0.3)]",
+    "grid_background": "bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]",
+    "gradients": {
+      "hero": "bg-gradient-to-b from-slate-950 to-slate-900",
+      "card_hover": "hover:bg-slate-800/50 transition-colors duration-300"
+    }
+  },
+  "layout_strategies": {
+    "coach_dashboard": {
+      "type": "Control Room Grid",
+      "grid_cols": "grid-cols-1 md:grid-cols-4 lg:grid-cols-6",
+      "gap": "gap-4",
+      "padding": "p-4 md:p-6"
+    },
+    "athlete_profile": {
+      "type": "Tetris Grid",
+      "grid_cols": "grid-cols-1 md:grid-cols-8 lg:grid-cols-12",
+      "gap": "gap-6",
+      "padding": "p-6 md:p-8"
+    }
+  },
+  "components": {
+    "cards": {
+      "style": "flat",
+      "border": "border border-slate-800",
+      "radius": "rounded-xl",
+      "shadow": "shadow-none"
+    },
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_10px_rgba(56,189,248,0.4)] uppercase tracking-wider font-bold",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/90 uppercase tracking-wider font-bold",
+      "outline": "border-slate-700 hover:bg-slate-800 text-slate-300"
+    },
+    "charts": {
+      "library": "recharts",
+      "style": "minimal",
+      "grid": "stroke-slate-800 stroke-dasharray-3-3",
+      "tooltip": "bg-slate-900 border-slate-700 text-slate-200"
+    }
+  },
+  "assets": {
+    "images": [
+      {
+        "category": "hero_background",
+        "url": "https://images.unsplash.com/photo-1559819810-5036f57a9e8b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxyb3dpbmclMjBjcmV3JTIwc3Vuc2V0fGVufDB8fHx8MTc2ODE2NDIxMnww&ixlib=rb-4.1.0&q=85",
+        "description": "Rowing crew at sunset - Use for Login/Landing background with overlay"
+      },
+      {
+        "category": "athlete_motivation",
+        "url": "https://images.pexels.com/photos/12076114/pexels-photo-12076114.jpeg",
+        "description": "Close up athlete - Use for Athlete Profile header or motivation card"
+      }
+    ],
+    "icons": "lucide-react"
+  },
+  "instructions_to_main_agent": [
+    "1. UPDATE TAILWIND CONFIG: Extend the theme with the colors provided in 'colors.palette'. Use CSS variables in index.css for dynamic theming if needed, but hardcoding the dark theme values into the :root or .dark class is preferred for this specific 'Dark Mode Only' vibe.",
+    "2. FONTS: Add the Google Fonts import to index.css. Apply 'font-sans' (Manrope) to body, 'font-heading' (Chivo) to headings, and 'font-mono' (JetBrains Mono) to data tables.",
+    "3. SHADCN: Customize the 'card', 'popover', 'primary', etc. colors in index.css to match the 'colors.palette' exactly. Do not use the default slate/zinc values.",
+    "4. LAYOUT: When building the Coach Dashboard, use the 'Control Room Grid'. It should feel dense but organized. Use 'table' components for athlete lists but style them with minimal borders.",
+    "5. CHARTS: Use Recharts. Make them look 'neon'. Stroke width 2px or 3px. Dot={false} usually, unless active. Use the 'zones' colors for reference lines (e.g., Red line for Max HR).",
+    "6. DATA-TESTID: Every interactive element (buttons, inputs, row clicks) MUST have a data-testid attribute."
+  ],
+  "universal_guidelines": [
+    "Avoid gradients for backgrounds unless it's a subtle 'spotlight' effect.",
+    "Use 'backdrop-blur' heavily for floating panels or sticky headers.",
+    "Text hierarchy: Headings (White/Bright), Body (Slate-400), Data Labels (Slate-500), Data Values (White/Neon).",
+    "Spacing: Use 'gap-6' or 'gap-8' for main grid layouts to let the data breathe.",
+    "Borders: Use 'border-slate-800' for almost everything. It's subtle but defines structure."
+  ]
+}
