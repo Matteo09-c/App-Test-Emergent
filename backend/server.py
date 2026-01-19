@@ -755,37 +755,44 @@ async def get_user(user_id: str, current_user: dict = Depends(get_current_user))
 
 @api_router.post("/tests", response_model=Test)
 async def create_test(test_data: TestCreate, current_user: dict = Depends(get_current_user)):
-    # Get athlete info
-    athlete = await db.users.find_one({"id": test_data.athlete_id}, {"_id": 0})
-    if not athlete:
-        raise HTTPException(status_code=404, detail="Atleta non trovato")
+    # Get person (athlete/coach/super_admin) info
+    person = await db.users.find_one({"id": test_data.athlete_id}, {"_id": 0})
+    if not person:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
     
     # Check permissions
     if current_user["role"] == UserRole.ATHLETE:
+        # Athletes can only add their own tests
         if current_user["user_id"] != test_data.athlete_id:
             raise HTTPException(status_code=403, detail="Gli atleti possono aggiungere solo i propri test")
     elif current_user["role"] == UserRole.COACH:
-        user = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
-        coach_societies = set(user.get("society_ids", []))
-        athlete_societies = set(athlete.get("society_ids", []))
-        if not coach_societies.intersection(athlete_societies):
-            raise HTTPException(status_code=403, detail="I coach possono aggiungere test solo per atleti della propria società")
+        # Coach can add tests for:
+        # 1. Athletes in their societies
+        # 2. Their own tests
+        # 3. Tests for coaches in their societies
+        if current_user["user_id"] != test_data.athlete_id:
+            user = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
+            coach_societies = set(user.get("society_ids", []))
+            person_societies = set(person.get("society_ids", []))
+            if not coach_societies.intersection(person_societies):
+                raise HTTPException(status_code=403, detail="Non autorizzato ad aggiungere test per questo utente")
+    # Super admin can add tests for anyone
     
     # Calculate metrics
     split_500 = calculate_split_500(test_data.distance, test_data.time_seconds)
     watts = calculate_watts(split_500)
     
-    weight = test_data.weight or athlete.get("weight", 0)
+    weight = test_data.weight or person.get("weight", 0)
     watts_per_kg = calculate_watts_per_kg(watts, weight) if weight else None
     
-    # Get athlete's primary society
-    society_id = athlete.get("society_ids", [None])[0] if athlete.get("society_ids") else None
+    # Get person's primary society
+    society_id = person.get("society_ids", [None])[0] if person.get("society_ids") else None
     
     test_id = str(uuid.uuid4())
     test_doc = {
         "id": test_id,
         "athlete_id": test_data.athlete_id,
-        "athlete_name": athlete["name"],
+        "athlete_name": person["name"],
         "society_id": society_id,
         "date": test_data.date,
         "distance": test_data.distance,
@@ -795,7 +802,7 @@ async def create_test(test_data: TestCreate, current_user: dict = Depends(get_cu
         "watts_per_kg": watts_per_kg,
         "strokes": test_data.strokes,
         "weight": weight,
-        "height": test_data.height or athlete.get("height"),
+        "height": test_data.height or person.get("height"),
         "notes": test_data.notes,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
