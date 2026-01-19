@@ -344,8 +344,29 @@ async def get_me(current_user: dict = Depends(get_current_user)):
 
 @api_router.post("/auth/forgot-password")
 async def forgot_password(request: PasswordResetRequest):
-    """Send password reset email"""
-    user = await db.users.find_one({"email": request.email}, {"_id": 0})
+    """Send password reset email with rate limiting"""
+    # Rate limiting: max 3 attempts per hour per email
+    email = request.email
+    now = datetime.now(timezone.utc)
+    
+    if email in password_reset_attempts:
+        # Clean old attempts (older than 1 hour)
+        password_reset_attempts[email] = [
+            ts for ts in password_reset_attempts[email]
+            if (now - ts).total_seconds() < 3600
+        ]
+        
+        if len(password_reset_attempts[email]) >= 3:
+            raise HTTPException(
+                status_code=429,
+                detail="Troppi tentativi. Riprova tra 1 ora."
+            )
+    else:
+        password_reset_attempts[email] = []
+    
+    password_reset_attempts[email].append(now)
+    
+    user = await db.users.find_one({"email": email}, {"_id": 0})
     if not user:
         # Don't reveal if email exists for security
         return {"message": "Se l'email esiste, riceverai un link per il reset della password"}
@@ -409,7 +430,7 @@ async def forgot_password(request: PasswordResetRequest):
         # Send email using Resend (non-blocking)
         email_params = {
             "from": SENDER_EMAIL,
-            "to": [request.email],
+            "to": [email],
             "subject": "Reset Password - Rowing Tests",
             "html": html_content
         }
