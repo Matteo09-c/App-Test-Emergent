@@ -339,6 +339,116 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+@api_router.post("/auth/forgot-password")
+async def forgot_password(request: PasswordResetRequest):
+    """Send password reset email"""
+    user = await db.users.find_one({"email": request.email}, {"_id": 0})
+    if not user:
+        # Don't reveal if email exists for security
+        return {"message": "Se l'email esiste, riceverai un link per il reset della password"}
+    
+    # Generate reset token (valid for 1 hour)
+    reset_token = str(uuid.uuid4())
+    reset_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    # Save token to database
+    await db.password_resets.insert_one({
+        "user_id": user["id"],
+        "token": reset_token,
+        "expiry": reset_expiry.isoformat(),
+        "used": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # Send email with reset link
+    reset_url = f"{FRONTEND_URL}/reset-password?token={reset_token}"
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+            .content {{ background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }}
+            .button {{ display: inline-block; background: #38bdf8; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }}
+            .footer {{ text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🚣 ROWING TESTS</h1>
+                <p>Reset Password</p>
+            </div>
+            <div class="content">
+                <h2>Ciao {user['name']},</h2>
+                <p>Hai richiesto di reimpostare la tua password. Clicca sul pulsante qui sotto per procedere:</p>
+                <div style="text-align: center;">
+                    <a href="{reset_url}" class="button">Reimposta Password</a>
+                </div>
+                <p>Oppure copia e incolla questo link nel tuo browser:</p>
+                <p style="background: white; padding: 15px; border-radius: 5px; word-break: break-all;">{reset_url}</p>
+                <p><strong>Nota:</strong> Questo link è valido per 1 ora.</p>
+                <p>Se non hai richiesto il reset della password, ignora questa email.</p>
+            </div>
+            <div class="footer">
+                <p>© 2026 Rowing Tests - Gestione Test di Canottaggio</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    try:
+        # Send email using Resend (non-blocking)
+        email_params = {
+            "from": SENDER_EMAIL,
+            "to": [request.email],
+            "subject": "Reset Password - Rowing Tests",
+            "html": html_content
+        }
+        await asyncio.to_thread(resend.Emails.send, email_params)
+    except Exception as e:
+        logging.error(f"Failed to send reset email: {str(e)}")
+        # Don't reveal email sending failure to user
+    
+    return {"message": "Se l'email esiste, riceverai un link per il reset della password"}
+
+@api_router.post("/auth/reset-password")
+async def reset_password(request: PasswordResetConfirm):
+    """Reset password with token"""
+    # Find valid reset token
+    reset_doc = await db.password_resets.find_one({
+        "token": request.token,
+        "used": False
+    }, {"_id": 0})
+    
+    if not reset_doc:
+        raise HTTPException(status_code=400, detail="Token non valido o già utilizzato")
+    
+    # Check if token is expired
+    expiry = datetime.fromisoformat(reset_doc["expiry"])
+    if datetime.now(timezone.utc) > expiry:
+        raise HTTPException(status_code=400, detail="Token scaduto")
+    
+    # Update password
+    hashed_pw = hash_password(request.new_password)
+    await db.users.update_one(
+        {"id": reset_doc["user_id"]},
+        {"$set": {"password": hashed_pw}}
+    )
+    
+    # Mark token as used
+    await db.password_resets.update_one(
+        {"token": request.token},
+        {"$set": {"used": True}}
+    )
+    
+    return {"message": "Password aggiornata con successo"}
+
 # ==================== SOCIETY ROUTES ====================
 
 @api_router.post("/societies", response_model=Society)
