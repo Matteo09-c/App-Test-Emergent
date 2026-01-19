@@ -228,12 +228,12 @@ async def register(user_data: UserRegister):
     # Determine initial status
     # Super admins must be approved by existing super admin (except first one)
     # Coaches and athletes start as pending
-    status = UserStatus.PENDING
+    user_status = UserStatus.PENDING
     
     # Check if this is the first user (should be super admin)
     user_count = await db.users.count_documents({})
     if user_count == 0 and user_data.email == "acquistapacem09@gmail.com":
-        status = UserStatus.APPROVED
+        user_status = UserStatus.APPROVED
     
     # Create user
     user_id = str(uuid.uuid4())
