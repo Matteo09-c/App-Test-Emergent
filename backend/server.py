@@ -102,6 +102,7 @@ class User(BaseModel):
     category: Optional[str] = None
     weight: Optional[float] = None
     height: Optional[float] = None
+    designated_coach_id: Optional[str] = None  # Coach che può vedere i test di questo coach/super_admin
     created_at: str
 
 class UserRegister(BaseModel):
