@@ -7,9 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
-import { LogOut, Plus, Users, Activity, TrendingUp } from 'lucide-react';
-import { getUsers, getTests, createTest, getSocieties, createSociety } from '../utils/api';
+import { LogOut, Plus, Users, Activity, TrendingUp, UserCheck, UserX, ArrowRightLeft } from 'lucide-react';
+import { getUsers, getTests, createTest, getSocieties, createSociety, getPendingUsers, approveUser, rejectUser, getSocietyChangeRequests, approveSocietyChange } from '../utils/api';
 import { formatTime, formatSplit } from '../utils/api';
 
 export default function CoachDashboard() {
