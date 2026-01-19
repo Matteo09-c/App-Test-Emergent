@@ -18,8 +18,11 @@ export default function AthleteDashboard() {
   const navigate = useNavigate();
   const [tests, setTests] = useState([]);
   const [stats, setStats] = useState(null);
+  const [societies, setSocieties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showTestDialog, setShowTestDialog] = useState(false);
+  const [showSocietyChangeDialog, setShowSocietyChangeDialog] = useState(false);
+  const [selectedNewSociety, setSelectedNewSociety] = useState('');
   const [testData, setTestData] = useState({
     date: new Date().toISOString().split('T')[0],
     distance: '',
