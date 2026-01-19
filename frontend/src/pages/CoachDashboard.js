@@ -292,53 +292,183 @@ export default function CoachDashboard() {
           </Card>
         </div>
 
-        {/* Athletes Table */}
-        <Card className="border-slate-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Atleti
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full" data-testid="athletes-table">
-                <thead>
-                  <tr className="border-b border-slate-800">
-                    <th className="text-left p-3 font-mono text-sm text-muted-foreground">NOME</th>
-                    <th className="text-left p-3 font-mono text-sm text-muted-foreground">CATEGORIA</th>
-                    <th className="text-left p-3 font-mono text-sm text-muted-foreground">TEST</th>
-                    <th className="text-left p-3 font-mono text-sm text-muted-foreground">ULTIMO TEST</th>
-                    <th className="text-left p-3 font-mono text-sm text-muted-foreground">AZIONI</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {athleteStats.map((athlete) => (
-                    <tr key={athlete.id} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors" data-testid={`athlete-row-${athlete.id}`}>
-                      <td className="p-3 font-medium">{athlete.name}</td>
-                      <td className="p-3 text-muted-foreground">{athlete.category || '-'}</td>
-                      <td className="p-3 font-mono text-primary">{athlete.testsCount}</td>
-                      <td className="p-3 font-mono text-sm">{athlete.lastTest || '-'}</td>
-                      <td className="p-3">
-                        <Button size="sm" variant="outline" onClick={() => navigate(`/athlete/${athlete.id}`)} data-testid={`view-athlete-${athlete.id}`}>
-                          <TrendingUp className="h-4 w-4 mr-2" />
-                          Vedi Profilo
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                  {athleteStats.length === 0 && (
-                    <tr>
-                      <td colSpan="5" className="p-8 text-center text-muted-foreground">
-                        Nessun atleta trovato
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Tabs for different views */}
+        <Tabs defaultValue="athletes" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="athletes" data-testid="athletes-tab">
+              <Users className="h-4 w-4 mr-2" />
+              Atleti ({athletes.length})
+            </TabsTrigger>
+            <TabsTrigger value="pending" data-testid="pending-tab">
+              <UserCheck className="h-4 w-4 mr-2" />
+              Da Approvare ({pendingUsers.length})
+            </TabsTrigger>
+            <TabsTrigger value="requests" data-testid="requests-tab">
+              <ArrowRightLeft className="h-4 w-4 mr-2" />
+              Richieste Cambio ({societyChangeRequests.length})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Athletes Table */}
+          <TabsContent value="athletes">
+            <Card className="border-slate-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Atleti Approvati
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full" data-testid="athletes-table">
+                    <thead>
+                      <tr className="border-b border-slate-800">
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">NOME</th>
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">CATEGORIA</th>
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">TEST</th>
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">ULTIMO TEST</th>
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">AZIONI</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {athleteStats.map((athlete) => (
+                        <tr key={athlete.id} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors" data-testid={`athlete-row-${athlete.id}`}>
+                          <td className="p-3 font-medium">{athlete.name}</td>
+                          <td className="p-3 text-muted-foreground">{athlete.category || '-'}</td>
+                          <td className="p-3 font-mono text-primary">{athlete.testsCount}</td>
+                          <td className="p-3 font-mono text-sm">{athlete.lastTest || '-'}</td>
+                          <td className="p-3">
+                            <Button size="sm" variant="outline" onClick={() => navigate(`/athlete/${athlete.id}`)} data-testid={`view-athlete-${athlete.id}`}>
+                              <TrendingUp className="h-4 w-4 mr-2" />
+                              Vedi Profilo
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                      {athleteStats.length === 0 && (
+                        <tr>
+                          <td colSpan="5" className="p-8 text-center text-muted-foreground">
+                            Nessun atleta trovato
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Pending Users Table */}
+          <TabsContent value="pending">
+            <Card className="border-slate-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCheck className="h-5 w-5" />
+                  Utenti in Attesa di Approvazione
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full" data-testid="pending-users-table">
+                    <thead>
+                      <tr className="border-b border-slate-800">
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">NOME</th>
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">EMAIL</th>
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">RUOLO</th>
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">CATEGORIA</th>
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">AZIONI</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingUsers.map((user) => (
+                        <tr key={user.id} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                          <td className="p-3 font-medium">{user.name}</td>
+                          <td className="p-3 text-sm text-muted-foreground">{user.email}</td>
+                          <td className="p-3">
+                            <Badge variant={user.role === 'coach' ? 'default' : 'secondary'}>
+                              {user.role === 'coach' ? 'Coach' : 'Atleta'}
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-muted-foreground">{user.category || '-'}</td>
+                          <td className="p-3">
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => handleApproveUser(user.id)} data-testid={`approve-user-${user.id}`}>
+                                <UserCheck className="h-4 w-4 mr-1" />
+                                Approva
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleRejectUser(user.id)} data-testid={`reject-user-${user.id}`}>
+                                <UserX className="h-4 w-4 mr-1" />
+                                Rifiuta
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {pendingUsers.length === 0 && (
+                        <tr>
+                          <td colSpan="5" className="p-8 text-center text-muted-foreground">
+                            Nessun utente in attesa di approvazione
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Society Change Requests Table */}
+          <TabsContent value="requests">
+            <Card className="border-slate-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ArrowRightLeft className="h-5 w-5" />
+                  Richieste Cambio Società
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full" data-testid="change-requests-table">
+                    <thead>
+                      <tr className="border-b border-slate-800">
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">ATLETA</th>
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">NUOVA SOCIETÀ</th>
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">DATA</th>
+                        <th className="text-left p-3 font-mono text-sm text-muted-foreground">AZIONI</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {societyChangeRequests.map((request) => (
+                        <tr key={request.id} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                          <td className="p-3 font-medium">{request.athlete_name}</td>
+                          <td className="p-3 text-primary">{request.new_society_name}</td>
+                          <td className="p-3 text-sm text-muted-foreground">
+                            {new Date(request.created_at).toLocaleDateString('it-IT')}
+                          </td>
+                          <td className="p-3">
+                            <Button size="sm" onClick={() => handleApproveSocietyChange(request.id)} data-testid={`approve-change-${request.id}`}>
+                              <UserCheck className="h-4 w-4 mr-1" />
+                              Approva
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                      {societyChangeRequests.length === 0 && (
+                        <tr>
+                          <td colSpan="4" className="p-8 text-center text-muted-foreground">
+                            Nessuna richiesta di cambio società
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
