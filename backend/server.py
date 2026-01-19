@@ -554,16 +554,18 @@ async def create_test(test_data: TestCreate, current_user: dict = Depends(get_cu
     # Get athlete info
     athlete = await db.users.find_one({"id": test_data.athlete_id}, {"_id": 0})
     if not athlete:
-        raise HTTPException(status_code=404, detail="Athlete not found")
+        raise HTTPException(status_code=404, detail="Atleta non trovato")
     
     # Check permissions
     if current_user["role"] == UserRole.ATHLETE:
         if current_user["user_id"] != test_data.athlete_id:
-            raise HTTPException(status_code=403, detail="Athletes can only add their own tests")
+            raise HTTPException(status_code=403, detail="Gli atleti possono aggiungere solo i propri test")
     elif current_user["role"] == UserRole.COACH:
         user = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
-        if user.get("society_id") != athlete.get("society_id"):
-            raise HTTPException(status_code=403, detail="Coaches can only add tests for their society")
+        coach_societies = set(user.get("society_ids", []))
+        athlete_societies = set(athlete.get("society_ids", []))
+        if not coach_societies.intersection(athlete_societies):
+            raise HTTPException(status_code=403, detail="I coach possono aggiungere test solo per atleti della propria società")
     
     # Calculate metrics
     split_500 = calculate_split_500(test_data.distance, test_data.time_seconds)
@@ -572,12 +574,15 @@ async def create_test(test_data: TestCreate, current_user: dict = Depends(get_cu
     weight = test_data.weight or athlete.get("weight", 0)
     watts_per_kg = calculate_watts_per_kg(watts, weight) if weight else None
     
+    # Get athlete's primary society
+    society_id = athlete.get("society_ids", [None])[0] if athlete.get("society_ids") else None
+    
     test_id = str(uuid.uuid4())
     test_doc = {
         "id": test_id,
         "athlete_id": test_data.athlete_id,
         "athlete_name": athlete["name"],
-        "society_id": athlete.get("society_id"),
+        "society_id": society_id,
         "date": test_data.date,
         "distance": test_data.distance,
         "time_seconds": test_data.time_seconds,
@@ -602,10 +607,16 @@ async def get_tests(athlete_id: Optional[str] = None, current_user: dict = Depen
     if current_user["role"] == UserRole.ATHLETE:
         query["athlete_id"] = current_user["user_id"]
     elif current_user["role"] == UserRole.COACH:
-        # Coaches see tests from their society
+        # Coaches see tests from their societies
         user = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
-        if user and user.get("society_id"):
-            query["society_id"] = user["society_id"]
+        if user and user.get("society_ids"):
+            # Get all athletes in coach's societies
+            athletes_in_societies = await db.users.find(
+                {"society_ids": {"$in": user["society_ids"]}, "role": UserRole.ATHLETE},
+                {"_id": 0}
+            ).to_list(1000)
+            athlete_ids = [a["id"] for a in athletes_in_societies]
+            query["athlete_id"] = {"$in": athlete_ids}
     
     # Apply athlete filter if provided
     if athlete_id:
