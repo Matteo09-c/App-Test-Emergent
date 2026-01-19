@@ -192,8 +192,8 @@ export default function Login() {
                 </div>
                 {registerData.role !== 'super_admin' && (
                   <div className="space-y-2">
-                    <Label htmlFor="register-society">Società</Label>
-                    <Select value={registerData.society_id} onValueChange={(value) => setRegisterData({...registerData, society_id: value})}>
+                    <Label htmlFor="register-society">Società *</Label>
+                    <Select value={registerData.society_id} onValueChange={(value) => setRegisterData({...registerData, society_id: value})} required>
                       <SelectTrigger data-testid="register-society-select">
                         <SelectValue placeholder="Seleziona società" />
                       </SelectTrigger>
@@ -205,6 +205,21 @@ export default function Login() {
                     </Select>
                   </div>
                 )}
+                <div className="space-y-2">
+                  <Label htmlFor="register-birth-year">Anno di Nascita *</Label>
+                  <Input
+                    id="register-birth-year"
+                    type="number"
+                    data-testid="register-birth-year-input"
+                    placeholder="2005"
+                    min="1950"
+                    max={new Date().getFullYear()}
+                    value={registerData.birth_year}
+                    onChange={(e) => setRegisterData({...registerData, birth_year: e.target.value})}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">La categoria verrà calcolata automaticamente</p>
+                </div>
                 {registerData.role === 'athlete' && (
                   <>
                     <div className="grid grid-cols-2 gap-4">
@@ -232,21 +247,16 @@ export default function Login() {
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-category">Categoria</Label>
-                      <Input
-                        id="register-category"
-                        data-testid="register-category-input"
-                        placeholder="es. RAGAZZI 1°, JUNIOR 2°"
-                        value={registerData.category}
-                        onChange={(e) => setRegisterData({...registerData, category: e.target.value})}
-                      />
-                    </div>
                   </>
                 )}
                 <Button type="submit" className="w-full" data-testid="register-submit-button" disabled={loading}>
                   {loading ? 'REGISTRAZIONE...' : 'REGISTRATI'}
                 </Button>
+                {registerData.role !== 'super_admin' && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    La tua registrazione dovrà essere approvata da un amministratore
+                  </p>
+                )}
               </form>
             </TabsContent>
           </Tabs>
