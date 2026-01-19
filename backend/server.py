@@ -462,6 +462,33 @@ async def reject_user(user_id: str, current_user: dict = Depends(get_current_use
     
     return {"message": "Utente rifiutato"}
 
+@api_router.post("/admin/recalculate-categories")
+async def recalculate_all_categories(current_user: dict = Depends(get_current_user)):
+    """Recalculate categories for all users with birth_year (run on Jan 1st)"""
+    if current_user["role"] != UserRole.SUPER_ADMIN:
+        raise HTTPException(status_code=403, detail="Solo i Super Admin possono ricalcolare le categorie")
+    
+    users_with_birth_year = await db.users.find(
+        {"birth_year": {"$exists": True, "$ne": None}},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    updated_count = 0
+    for user in users_with_birth_year:
+        new_category = calculate_category_from_birth_year(user["birth_year"])
+        if user.get("category") != new_category:
+            await db.users.update_one(
+                {"id": user["id"]},
+                {"$set": {"category": new_category}}
+            )
+            updated_count += 1
+    
+    return {
+        "message": f"Categorie aggiornate per {updated_count} utenti",
+        "total_users": len(users_with_birth_year),
+        "updated": updated_count
+    }
+
 @api_router.post("/athletes/{athlete_id}/request-society-change")
 async def request_society_change(athlete_id: str, new_society_id: str, current_user: dict = Depends(get_current_user)):
     """Athlete requests to change society"""
