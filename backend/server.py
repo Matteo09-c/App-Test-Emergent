@@ -38,6 +38,40 @@ class UserRole:
     COACH = "coach"
     ATHLETE = "athlete"
 
+class UserStatus:
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+def calculate_category_from_birth_year(birth_year: int) -> str:
+    """Calculate rowing category based on birth year according to FIC rules"""
+    from datetime import datetime
+    current_year = datetime.now().year
+    age = current_year - birth_year
+    
+    if age <= 13:
+        return "ESORDIENTI"
+    elif age == 14 or age == 15:
+        return "RAGAZZI"
+    elif age == 16:
+        return "CADETTI"
+    elif age == 17:
+        return "ALLIEVI C"
+    elif age == 18:
+        return "ALLIEVI B"
+    elif age == 19:
+        return "ALLIEVI A"
+    elif age >= 20 and age <= 22:
+        return "JUNIOR"
+    elif age == 23 or age == 24:
+        return "UNDER 23"
+    elif age >= 25 and age < 27:
+        return "SENIOR"
+    elif age >= 27:
+        return "MASTER"
+    else:
+        return "NON CLASSIFICATO"
+
 class Society(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     id: str
@@ -50,7 +84,9 @@ class User(BaseModel):
     email: EmailStr
     name: str
     role: str
-    society_id: Optional[str] = None
+    status: str
+    society_ids: Optional[List[str]] = None
+    birth_year: Optional[int] = None
     category: Optional[str] = None
     weight: Optional[float] = None
     height: Optional[float] = None
@@ -62,9 +98,24 @@ class UserRegister(BaseModel):
     name: str
     role: str
     society_id: Optional[str] = None
-    category: Optional[str] = None
+    birth_year: Optional[int] = None
     weight: Optional[float] = None
     height: Optional[float] = None
+
+class SocietyChangeRequest(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    id: str
+    athlete_id: str
+    athlete_name: str
+    old_society_id: Optional[str]
+    new_society_id: str
+    new_society_name: str
+    status: str
+    created_at: str
+
+class ApprovalRequest(BaseModel):
+    user_id: str
+    action: str  # "approve" or "reject"
 
 class UserLogin(BaseModel):
     email: EmailStr
