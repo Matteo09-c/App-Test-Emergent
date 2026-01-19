@@ -245,7 +245,7 @@ async def register(user_data: UserRegister):
         "password": hashed_pw,
         "name": user_data.name,
         "role": user_data.role,
-        "status": status,
+        "status": user_status,
         "society_ids": society_ids,
         "birth_year": user_data.birth_year,
         "category": category,
@@ -266,7 +266,7 @@ async def register(user_data: UserRegister):
                 "email": user_data.email,
                 "name": user_data.name,
                 "role": user_data.role,
-                "status": status,
+                "status": user_status,
                 "society_ids": society_ids
             }
         }
