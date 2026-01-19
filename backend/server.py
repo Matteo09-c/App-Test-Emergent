@@ -538,7 +538,8 @@ async def get_society_change_requests(current_user: dict = Depends(get_current_u
         query["new_society_id"] = {"$in": user["society_ids"]}
     
     requests = await db.society_change_requests.find(query, {"_id": 0}).to_list(1000)
-    return requests
+    # Convert to simple dicts
+    return [dict(r) for r in requests]
 
 @api_router.post("/society-change-requests/{request_id}/approve")
 async def approve_society_change(request_id: str, current_user: dict = Depends(get_current_user)):
