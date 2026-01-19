@@ -344,19 +344,201 @@ async def get_societies(current_user: dict = Depends(get_current_user)):
 # ==================== USER ROUTES ====================
 
 @api_router.get("/users", response_model=List[User])
-async def get_users(current_user: dict = Depends(get_current_user)):
-    # Coaches can only see athletes in their society
+async def get_users(status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    query = {}
+    
+    # Super admin can see all users
+    if current_user["role"] == UserRole.SUPER_ADMIN:
+        if status:
+            query["status"] = status
+    # Coaches can see users in their societies
+    elif current_user["role"] == UserRole.COACH:
+        user = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
+        if not user or not user.get("society_ids"):
+            return []
+        query["society_ids"] = {"$in": user["society_ids"]}
+        if status:
+            query["status"] = status
+    # Athletes see nothing via this endpoint
+    else:
+        return []
+    
+    users = await db.users.find(query, {"_id": 0, "password": 0}).to_list(1000)
+    return users
+
+@api_router.get("/users/pending", response_model=List[User])
+async def get_pending_users(current_user: dict = Depends(get_current_user)):
+    """Get all pending user registrations that current user can approve"""
+    query = {"status": UserStatus.PENDING}
+    
+    if current_user["role"] == UserRole.SUPER_ADMIN:
+        # Super admin sees all pending
+        pass
+    elif current_user["role"] == UserRole.COACH:
+        # Coach sees pending athletes/coaches in their societies
+        user = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
+        if not user or not user.get("society_ids"):
+            return []
+        query["society_ids"] = {"$in": user["society_ids"]}
+        query["role"] = {"$in": [UserRole.ATHLETE, UserRole.COACH]}
+    else:
+        return []
+    
+    users = await db.users.find(query, {"_id": 0, "password": 0}).to_list(1000)
+    return users
+
+@api_router.post("/users/{user_id}/approve")
+async def approve_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Approve a pending user registration"""
+    # Get the user to approve
+    user_to_approve = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user_to_approve:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+    
+    if user_to_approve.get("status") != UserStatus.PENDING:
+        raise HTTPException(status_code=400, detail="L'utente non è in attesa di approvazione")
+    
+    # Check permissions
+    current_user_doc = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
+    
+    if current_user["role"] == UserRole.SUPER_ADMIN:
+        # Super admin can approve anyone
+        pass
+    elif current_user["role"] == UserRole.COACH:
+        # Coach can approve athletes/coaches in their societies
+        if user_to_approve.get("role") not in [UserRole.ATHLETE, UserRole.COACH]:
+            raise HTTPException(status_code=403, detail="Non autorizzato")
+        
+        # Check if they share a society
+        coach_societies = set(current_user_doc.get("society_ids", []))
+        user_societies = set(user_to_approve.get("society_ids", []))
+        if not coach_societies.intersection(user_societies):
+            raise HTTPException(status_code=403, detail="Non autorizzato ad approvare questo utente")
+    else:
+        raise HTTPException(status_code=403, detail="Non autorizzato")
+    
+    # Approve user
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"status": UserStatus.APPROVED}}
+    )
+    
+    return {"message": "Utente approvato con successo"}
+
+@api_router.post("/users/{user_id}/reject")
+async def reject_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Reject a pending user registration"""
+    user_to_reject = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user_to_reject:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+    
+    if user_to_reject.get("status") != UserStatus.PENDING:
+        raise HTTPException(status_code=400, detail="L'utente non è in attesa di approvazione")
+    
+    # Check permissions (same as approve)
+    current_user_doc = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
+    
+    if current_user["role"] == UserRole.SUPER_ADMIN:
+        pass
+    elif current_user["role"] == UserRole.COACH:
+        if user_to_reject.get("role") not in [UserRole.ATHLETE, UserRole.COACH]:
+            raise HTTPException(status_code=403, detail="Non autorizzato")
+        coach_societies = set(current_user_doc.get("society_ids", []))
+        user_societies = set(user_to_reject.get("society_ids", []))
+        if not coach_societies.intersection(user_societies):
+            raise HTTPException(status_code=403, detail="Non autorizzato")
+    else:
+        raise HTTPException(status_code=403, detail="Non autorizzato")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"status": UserStatus.REJECTED}}
+    )
+    
+    return {"message": "Utente rifiutato"}
+
+@api_router.post("/athletes/{athlete_id}/request-society-change")
+async def request_society_change(athlete_id: str, new_society_id: str, current_user: dict = Depends(get_current_user)):
+    """Athlete requests to change society"""
+    # Verify athlete is requesting for themselves
+    if current_user["user_id"] != athlete_id:
+        raise HTTPException(status_code=403, detail="Non autorizzato")
+    
+    athlete = await db.users.find_one({"id": athlete_id}, {"_id": 0})
+    if not athlete or athlete["role"] != UserRole.ATHLETE:
+        raise HTTPException(status_code=404, detail="Atleta non trovato")
+    
+    # Get new society
+    new_society = await db.societies.find_one({"id": new_society_id}, {"_id": 0})
+    if not new_society:
+        raise HTTPException(status_code=404, detail="Società non trovata")
+    
+    # Create change request
+    request_id = str(uuid.uuid4())
+    request_doc = {
+        "id": request_id,
+        "athlete_id": athlete_id,
+        "athlete_name": athlete["name"],
+        "old_society_id": athlete.get("society_ids", [None])[0] if athlete.get("society_ids") else None,
+        "new_society_id": new_society_id,
+        "new_society_name": new_society["name"],
+        "status": UserStatus.PENDING,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.society_change_requests.insert_one(request_doc)
+    
+    return {"message": "Richiesta di cambio società inviata", "request_id": request_id}
+
+@api_router.get("/society-change-requests")
+async def get_society_change_requests(current_user: dict = Depends(get_current_user)):
+    """Get pending society change requests for coach's societies"""
+    if current_user["role"] not in [UserRole.COACH, UserRole.SUPER_ADMIN]:
+        raise HTTPException(status_code=403, detail="Non autorizzato")
+    
+    query = {"status": UserStatus.PENDING}
+    
     if current_user["role"] == UserRole.COACH:
         user = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
-        if not user or not user.get("society_id"):
+        if not user or not user.get("society_ids"):
             return []
-        users = await db.users.find(
-            {"society_id": user["society_id"]},
-            {"_id": 0, "password": 0}
-        ).to_list(1000)
-    else:
-        users = await db.users.find({}, {"_id": 0, "password": 0}).to_list(1000)
-    return users
+        # Coach sees requests for their societies
+        query["new_society_id"] = {"$in": user["society_ids"]}
+    
+    requests = await db.society_change_requests.find(query, {"_id": 0}).to_list(1000)
+    return requests
+
+@api_router.post("/society-change-requests/{request_id}/approve")
+async def approve_society_change(request_id: str, current_user: dict = Depends(get_current_user)):
+    """Approve athlete society change request"""
+    request = await db.society_change_requests.find_one({"id": request_id}, {"_id": 0})
+    if not request:
+        raise HTTPException(status_code=404, detail="Richiesta non trovata")
+    
+    if request["status"] != UserStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Richiesta già processata")
+    
+    # Check permissions
+    if current_user["role"] == UserRole.COACH:
+        user = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
+        if not user or request["new_society_id"] not in user.get("society_ids", []):
+            raise HTTPException(status_code=403, detail="Non autorizzato")
+    elif current_user["role"] != UserRole.SUPER_ADMIN:
+        raise HTTPException(status_code=403, detail="Non autorizzato")
+    
+    # Update athlete's society
+    await db.users.update_one(
+        {"id": request["athlete_id"]},
+        {"$set": {"society_ids": [request["new_society_id"]]}}
+    )
+    
+    # Update request status
+    await db.society_change_requests.update_one(
+        {"id": request_id},
+        {"$set": {"status": UserStatus.APPROVED}}
+    )
+    
+    return {"message": "Cambio società approvato"}
 
 @api_router.get("/users/{user_id}", response_model=User)
 async def get_user(user_id: str, current_user: dict = Depends(get_current_user)):
