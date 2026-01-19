@@ -287,11 +287,15 @@ async def login(login_data: UserLogin):
     # Find user
     user = await db.users.find_one({"email": login_data.email}, {"_id": 0})
     if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Credenziali non valide")
     
     # Verify password
     if not verify_password(login_data.password, user["password"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Credenziali non valide")
+    
+    # Check if user is approved
+    if user.get("status") != UserStatus.APPROVED:
+        raise HTTPException(status_code=403, detail="Account in attesa di approvazione")
     
     # Generate token
     token = create_jwt_token(user["id"], user["email"], user["role"])
@@ -303,8 +307,10 @@ async def login(login_data: UserLogin):
             "email": user["email"],
             "name": user["name"],
             "role": user["role"],
-            "society_id": user.get("society_id"),
+            "status": user.get("status"),
+            "society_ids": user.get("society_ids", []),
             "category": user.get("category"),
+            "birth_year": user.get("birth_year"),
             "weight": user.get("weight"),
             "height": user.get("height")
         }
