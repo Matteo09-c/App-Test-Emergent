@@ -43,14 +43,18 @@ export default function CoachDashboard() {
 
   const loadData = async () => {
     try {
-      const [usersRes, testsRes, societiesRes] = await Promise.all([
+      const [usersRes, testsRes, societiesRes, pendingRes, changeReqRes] = await Promise.all([
         getUsers(),
         getTests(),
-        getSocieties()
+        getSocieties(),
+        getPendingUsers().catch(() => ({ data: [] })),
+        getSocietyChangeRequests().catch(() => ({ data: [] }))
       ]);
-      setAthletes(usersRes.data.filter(u => u.role === 'athlete'));
+      setAthletes(usersRes.data.filter(u => u.role === 'athlete' && u.status === 'approved'));
       setTests(testsRes.data);
       setSocieties(societiesRes.data);
+      setPendingUsers(pendingRes.data);
+      setSocietyChangeRequests(changeReqRes.data);
     } catch (error) {
       toast.error('Errore nel caricamento dei dati');
     } finally {
