@@ -349,16 +349,16 @@ async def get_users(user_status: Optional[str] = None, current_user: dict = Depe
     
     # Super admin can see all users
     if current_user["role"] == UserRole.SUPER_ADMIN:
-        if status:
-            query["status"] = status
+        if user_status:
+            query["status"] = user_status
     # Coaches can see users in their societies
     elif current_user["role"] == UserRole.COACH:
         user = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
         if not user or not user.get("society_ids"):
             return []
         query["society_ids"] = {"$in": user["society_ids"]}
-        if status:
-            query["status"] = status
+        if user_status:
+            query["status"] = user_status
     # Athletes see nothing via this endpoint
     else:
         return []
