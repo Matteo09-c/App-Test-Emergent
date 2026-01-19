@@ -838,7 +838,41 @@ async def get_tests(athlete_id: Optional[str] = None, current_user: dict = Depen
 
 @api_router.get("/tests/athlete/{athlete_id}/stats")
 async def get_athlete_stats(athlete_id: str, current_user: dict = Depends(get_current_user)):
-    # Get all tests for athlete
+    # Get the user whose stats we're viewing
+    target_user = await db.users.find_one({"id": athlete_id}, {"_id": 0})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+    
+    # Check permissions
+    can_view = False
+    
+    if current_user["user_id"] == athlete_id:
+        # Can always view own stats
+        can_view = True
+    elif current_user["role"] == UserRole.SUPER_ADMIN:
+        # Super admin can view anyone's stats
+        can_view = True
+    elif current_user["role"] == UserRole.COACH:
+        # Coach can view:
+        # 1. Athletes/coaches in their societies
+        # 2. Coaches/super admins who designated them
+        current_user_doc = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
+        coach_societies = set(current_user_doc.get("society_ids", []))
+        target_societies = set(target_user.get("society_ids", []))
+        
+        if coach_societies.intersection(target_societies):
+            can_view = True
+        elif target_user.get("designated_coach_id") == current_user["user_id"]:
+            can_view = True
+    elif current_user["role"] == UserRole.ATHLETE:
+        # Athletes can only view their own stats
+        if current_user["user_id"] == athlete_id:
+            can_view = True
+    
+    if not can_view:
+        raise HTTPException(status_code=403, detail="Non autorizzato a visualizzare questi dati")
+    
+    # Get all tests for user
     tests = await db.tests.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(10000)
     
     if not tests:
