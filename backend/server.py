@@ -126,6 +126,13 @@ class ApprovalRequest(BaseModel):
     user_id: str
     action: str  # "approve" or "reject"
 
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
