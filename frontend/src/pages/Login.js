@@ -137,6 +137,11 @@ export default function Login() {
                 <Button type="submit" className="w-full" data-testid="login-submit-button" disabled={loading}>
                   {loading ? 'ACCESSO...' : 'ACCEDI'}
                 </Button>
+                <div className="text-center mt-4">
+                  <Link to="/forgot-password" className="text-sm text-primary hover:underline" data-testid="forgot-password-link">
+                    Password dimenticata?
+                  </Link>
+                </div>
               </form>
             </TabsContent>
             
