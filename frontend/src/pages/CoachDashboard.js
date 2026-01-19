@@ -20,6 +20,8 @@ export default function CoachDashboard() {
   const [athletes, setAthletes] = useState([]);
   const [tests, setTests] = useState([]);
   const [societies, setSocieties] = useState([]);
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [societyChangeRequests, setSocietyChangeRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showTestDialog, setShowTestDialog] = useState(false);
   const [showSocietyDialog, setShowSocietyDialog] = useState(false);
