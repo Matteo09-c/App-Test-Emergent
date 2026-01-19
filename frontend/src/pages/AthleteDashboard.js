@@ -133,6 +133,47 @@ export default function AthleteDashboard() {
               </div>
             </div>
             <div className="flex gap-2">
+              <Dialog open={showSocietyChangeDialog} onOpenChange={setShowSocietyChangeDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" data-testid="change-society-button">
+                    <ArrowRightLeft className="h-4 w-4 mr-2" />
+                    Cambia Società
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Richiedi Cambio Società</DialogTitle>
+                    <CardDescription>
+                      La tua richiesta dovrà essere approvata da un coach della nuova società
+                    </CardDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Società Attuale</Label>
+                      <Input 
+                        value={societies.find(s => s.id === user?.society_ids?.[0])?.name || 'Nessuna'} 
+                        disabled 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Nuova Società</Label>
+                      <Select value={selectedNewSociety} onValueChange={setSelectedNewSociety}>
+                        <SelectTrigger data-testid="new-society-select">
+                          <SelectValue placeholder="Seleziona nuova società" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {societies.filter(s => s.id !== user?.society_ids?.[0]).map((society) => (
+                            <SelectItem key={society.id} value={society.id}>{society.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button onClick={handleRequestSocietyChange} className="w-full" data-testid="submit-society-change">
+                      Invia Richiesta
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
               <Button variant="outline" onClick={() => navigate(`/athlete/${user.id}`)} data-testid="view-profile-button">
                 <TrendingUp className="h-4 w-4 mr-2" />
                 Profilo Completo
