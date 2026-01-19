@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { Toaster } from './components/ui/sonner';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
@@ -86,6 +87,7 @@ function App() {
         <div className="App">
           <AppRoutes />
           <Toaster position="top-right" />
+          <Analytics />
         </div>
       </AuthProvider>
     </BrowserRouter>
