@@ -21,7 +21,7 @@ export default function Login() {
     name: '',
     role: 'athlete',
     society_id: '',
-    category: '',
+    birth_year: '',
     weight: '',
     height: ''
   });
