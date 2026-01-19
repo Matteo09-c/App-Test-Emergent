@@ -54,12 +54,19 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     const response = await axios.post(`${API_URL}/auth/register`, userData);
-    const { token: newToken, user: newUser } = response.data;
-    localStorage.setItem('token', newToken);
-    setToken(newToken);
-    setAuthToken(newToken);
-    setUser(newUser);
-    return newUser;
+    
+    // Check if user was auto-approved (has token) or needs approval
+    if (response.data.token) {
+      const { token: newToken, user: newUser } = response.data;
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+      setAuthToken(newToken);
+      setUser(newUser);
+      return newUser;
+    } else {
+      // User needs approval
+      return response.data;
+    }
   };
 
   const logout = () => {
