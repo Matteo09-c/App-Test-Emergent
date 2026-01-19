@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import CoachDashboard from './pages/CoachDashboard';
 import AthleteDashboard from './pages/AthleteDashboard';
 import AthleteProfile from './pages/AthleteProfile';
