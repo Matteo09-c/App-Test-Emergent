@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-import { LogOut, Plus, Activity, TrendingUp, Award } from 'lucide-react';
-import { getTests, createTest, getAthleteStats } from '../utils/api';
+import { LogOut, Plus, Activity, TrendingUp, Award, ArrowRightLeft } from 'lucide-react';
+import { getTests, createTest, getAthleteStats, getSocieties, requestSocietyChange } from '../utils/api';
 import { formatTime, formatSplit } from '../utils/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
