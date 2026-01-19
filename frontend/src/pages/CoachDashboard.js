@@ -104,6 +104,36 @@ export default function CoachDashboard() {
     }
   };
 
+  const handleApproveUser = async (userId) => {
+    try {
+      await approveUser(userId);
+      toast.success('Utente approvato!');
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Errore durante l\'approvazione');
+    }
+  };
+
+  const handleRejectUser = async (userId) => {
+    try {
+      await rejectUser(userId);
+      toast.success('Utente rifiutato');
+      loadData();
+    } catch (error) {
+      toast.error('Errore durante il rifiuto');
+    }
+  };
+
+  const handleApproveSocietyChange = async (requestId) => {
+    try {
+      await approveSocietyChange(requestId);
+      toast.success('Cambio società approvato!');
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Errore durante l\'approvazione');
+    }
+  };
+
   const athleteStats = athletes.map(athlete => {
     const athleteTests = tests.filter(t => t.athlete_id === athlete.id);
     return {
