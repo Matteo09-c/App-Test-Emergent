@@ -21,6 +21,15 @@ export const createSociety = (data) => api.post('/societies', data);
 // Users
 export const getUsers = () => api.get('/users');
 export const getUser = (userId) => api.get(`/users/${userId}`);
+export const getPendingUsers = () => api.get('/users/pending');
+export const approveUser = (userId) => api.post(`/users/${userId}/approve`);
+export const rejectUser = (userId) => api.post(`/users/${userId}/reject`);
+
+// Society Change Requests
+export const requestSocietyChange = (athleteId, newSocietyId) => 
+  api.post(`/athletes/${athleteId}/request-society-change?new_society_id=${newSocietyId}`);
+export const getSocietyChangeRequests = () => api.get('/society-change-requests');
+export const approveSocietyChange = (requestId) => api.post(`/society-change-requests/${requestId}/approve`);
 
 // Tests
 export const getTests = (athleteId = null) => {
