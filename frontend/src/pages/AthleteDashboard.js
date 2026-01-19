@@ -41,16 +41,33 @@ export default function AthleteDashboard() {
 
   const loadData = async () => {
     try {
-      const [testsRes, statsRes] = await Promise.all([
+      const [testsRes, statsRes, societiesRes] = await Promise.all([
         getTests(user.id),
-        getAthleteStats(user.id)
+        getAthleteStats(user.id),
+        getSocieties()
       ]);
       setTests(testsRes.data);
       setStats(statsRes.data);
+      setSocieties(societiesRes.data);
     } catch (error) {
       toast.error('Errore nel caricamento dei dati');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRequestSocietyChange = async () => {
+    if (!selectedNewSociety) {
+      toast.error('Seleziona una società');
+      return;
+    }
+    try {
+      await requestSocietyChange(user.id, selectedNewSociety);
+      toast.success('Richiesta di cambio società inviata! Attendi l\'approvazione di un coach.');
+      setShowSocietyChangeDialog(false);
+      setSelectedNewSociety('');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Errore durante la richiesta');
     }
   };
 
