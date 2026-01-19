@@ -660,6 +660,34 @@ async def cleanup_expired_tokens(current_user: dict = Depends(get_current_user))
         "deleted_count": result.deleted_count
     }
 
+@api_router.post("/users/{user_id}/set-designated-coach")
+async def set_designated_coach(user_id: str, coach_id: Optional[str], current_user: dict = Depends(get_current_user)):
+    """Set designated coach for a coach/super_admin to view their tests"""
+    if current_user["role"] != UserRole.SUPER_ADMIN:
+        raise HTTPException(status_code=403, detail="Solo i Super Admin possono impostare il coach designato")
+    
+    # Verify user exists and is coach/super_admin
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+    
+    if user["role"] not in [UserRole.COACH, UserRole.SUPER_ADMIN]:
+        raise HTTPException(status_code=400, detail="Solo coach e super admin possono avere un coach designato")
+    
+    # If coach_id provided, verify it's a valid coach
+    if coach_id:
+        coach = await db.users.find_one({"id": coach_id}, {"_id": 0})
+        if not coach or coach["role"] != UserRole.COACH:
+            raise HTTPException(status_code=404, detail="Coach non trovato")
+    
+    # Update designated coach
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"designated_coach_id": coach_id}}
+    )
+    
+    return {"message": "Coach designato aggiornato con successo"}
+
 @api_router.post("/athletes/{athlete_id}/request-society-change")
 async def request_society_change(athlete_id: str, new_society_id: str, current_user: dict = Depends(get_current_user)):
     """Athlete requests to change society"""
