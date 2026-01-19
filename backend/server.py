@@ -638,6 +638,27 @@ async def recalculate_all_categories(current_user: dict = Depends(get_current_us
         "updated": updated_count
     }
 
+@api_router.post("/admin/cleanup-expired-tokens")
+async def cleanup_expired_tokens(current_user: dict = Depends(get_current_user)):
+    """Clean up expired password reset tokens"""
+    if current_user["role"] != UserRole.SUPER_ADMIN:
+        raise HTTPException(status_code=403, detail="Solo i Super Admin possono eseguire la pulizia")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Delete expired or used tokens
+    result = await db.password_resets.delete_many({
+        "$or": [
+            {"expiry": {"$lt": now}},
+            {"used": True}
+        ]
+    })
+    
+    return {
+        "message": f"Pulizia completata: {result.deleted_count} token rimossi",
+        "deleted_count": result.deleted_count
+    }
+
 @api_router.post("/athletes/{athlete_id}/request-society-change")
 async def request_society_change(athlete_id: str, new_society_id: str, current_user: dict = Depends(get_current_user)):
     """Athlete requests to change society"""
