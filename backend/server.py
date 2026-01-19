@@ -344,7 +344,7 @@ async def get_societies(current_user: dict = Depends(get_current_user)):
 # ==================== USER ROUTES ====================
 
 @api_router.get("/users", response_model=List[User])
-async def get_users(status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+async def get_users(user_status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     query = {}
     
     # Super admin can see all users
