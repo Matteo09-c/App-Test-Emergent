@@ -44,30 +44,31 @@ class UserStatus:
     REJECTED = "rejected"
 
 def calculate_category_from_birth_year(birth_year: int) -> str:
-    """Calculate rowing category based on birth year according to FIC rules"""
+    """Calculate rowing category based on birth year according to FIC rules
+    Categories are based on age reached during the calendar year (by Dec 31)"""
     from datetime import datetime
     current_year = datetime.now().year
-    age = current_year - birth_year
+    age_in_year = current_year - birth_year
     
-    if age <= 13:
-        return "ESORDIENTI"
-    elif age == 14 or age == 15:
-        return "RAGAZZI"
-    elif age == 16:
-        return "CADETTI"
-    elif age == 17:
-        return "ALLIEVI C"
-    elif age == 18:
-        return "ALLIEVI B"
-    elif age == 19:
+    if age_in_year == 10:
         return "ALLIEVI A"
-    elif age >= 20 and age <= 22:
+    elif age_in_year == 11:
+        return "ALLIEVI B1"
+    elif age_in_year == 12:
+        return "ALLIEVI B2"
+    elif age_in_year == 13:
+        return "ALLIEVI C"
+    elif age_in_year == 14:
+        return "CADETTI"
+    elif age_in_year == 15 or age_in_year == 16:
+        return "RAGAZZI"
+    elif age_in_year == 17 or age_in_year == 18:
         return "JUNIOR"
-    elif age == 23 or age == 24:
+    elif age_in_year >= 19 and age_in_year <= 22:
         return "UNDER 23"
-    elif age >= 25 and age < 27:
+    elif age_in_year >= 23 and age_in_year <= 26:
         return "SENIOR"
-    elif age >= 27:
+    elif age_in_year >= 27:
         return "MASTER"
     else:
         return "NON CLASSIFICATO"
