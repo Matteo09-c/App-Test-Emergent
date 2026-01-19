@@ -327,6 +327,10 @@ async def get_me(current_user: dict = Depends(get_current_user)):
 
 @api_router.post("/societies", response_model=Society)
 async def create_society(society_data: SocietyCreate, current_user: dict = Depends(get_current_user)):
+    # Only super admin can create societies
+    if current_user["role"] != UserRole.SUPER_ADMIN:
+        raise HTTPException(status_code=403, detail="Solo i Super Admin possono creare società")
+    
     society_id = str(uuid.uuid4())
     society_doc = {
         "id": society_id,
