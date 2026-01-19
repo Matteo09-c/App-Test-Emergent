@@ -164,10 +164,16 @@ export default function CoachDashboard() {
                 <p className="text-sm text-muted-foreground">Dashboard Coach - {user?.name}</p>
               </div>
             </div>
-            <Button variant="outline" onClick={logout} data-testid="logout-button">
-              <LogOut className="h-4 w-4 mr-2" />
-              Esci
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => navigate(`/athlete/${user.id}`)} data-testid="coach-profile-button">
+                <TrendingUp className="h-4 w-4 mr-2" />
+                I Miei Test
+              </Button>
+              <Button variant="outline" onClick={logout} data-testid="logout-button">
+                <LogOut className="h-4 w-4 mr-2" />
+                Esci
+              </Button>
+            </div>
           </div>
         </div>
       </header>
