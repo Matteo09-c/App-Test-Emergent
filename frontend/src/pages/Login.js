@@ -63,12 +63,21 @@ export default function Login() {
     try {
       const data = {
         ...registerData,
+        birth_year: registerData.birth_year ? parseInt(registerData.birth_year) : null,
         weight: registerData.weight ? parseFloat(registerData.weight) : null,
         height: registerData.height ? parseFloat(registerData.height) : null
       };
-      const user = await register(data);
-      toast.success('Registrazione completata!');
-      navigate(user.role === 'athlete' ? '/athlete' : '/coach');
+      const response = await register(data);
+      
+      // Check if user needs approval
+      if (response.message) {
+        toast.success(response.message);
+        setLoginEmail(registerData.email);
+        setLoginPassword('');
+      } else {
+        toast.success('Registrazione completata!');
+        navigate(response.role === 'athlete' ? '/athlete' : '/coach');
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Errore durante la registrazione');
     } finally {
