@@ -211,25 +211,44 @@ async def register(user_data: UserRegister):
     # Check if user exists
     existing_user = await db.users.find_one({"email": user_data.email}, {"_id": 0})
     if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Email già registrata")
     
     # Validate role
     if user_data.role not in [UserRole.SUPER_ADMIN, UserRole.COACH, UserRole.ATHLETE]:
-        raise HTTPException(status_code=400, detail="Invalid role")
+        raise HTTPException(status_code=400, detail="Ruolo non valido")
+    
+    # Calculate category from birth year
+    category = None
+    if user_data.birth_year:
+        category = calculate_category_from_birth_year(user_data.birth_year)
     
     # Hash password
     hashed_pw = hash_password(user_data.password)
     
+    # Determine initial status
+    # Super admins must be approved by existing super admin (except first one)
+    # Coaches and athletes start as pending
+    status = UserStatus.PENDING
+    
+    # Check if this is the first user (should be super admin)
+    user_count = await db.users.count_documents({})
+    if user_count == 0 and user_data.email == "acquistapacem09@gmail.com":
+        status = UserStatus.APPROVED
+    
     # Create user
     user_id = str(uuid.uuid4())
+    society_ids = [user_data.society_id] if user_data.society_id else []
+    
     user_doc = {
         "id": user_id,
         "email": user_data.email,
         "password": hashed_pw,
         "name": user_data.name,
         "role": user_data.role,
-        "society_id": user_data.society_id,
-        "category": user_data.category,
+        "status": status,
+        "society_ids": society_ids,
+        "birth_year": user_data.birth_year,
+        "category": category,
         "weight": user_data.weight,
         "height": user_data.height,
         "created_at": datetime.now(timezone.utc).isoformat()
@@ -237,19 +256,31 @@ async def register(user_data: UserRegister):
     
     await db.users.insert_one(user_doc)
     
-    # Generate token
-    token = create_jwt_token(user_id, user_data.email, user_data.role)
-    
-    return {
-        "token": token,
-        "user": {
-            "id": user_id,
-            "email": user_data.email,
-            "name": user_data.name,
-            "role": user_data.role,
-            "society_id": user_data.society_id
+    # If approved, generate token
+    if status == UserStatus.APPROVED:
+        token = create_jwt_token(user_id, user_data.email, user_data.role)
+        return {
+            "token": token,
+            "user": {
+                "id": user_id,
+                "email": user_data.email,
+                "name": user_data.name,
+                "role": user_data.role,
+                "status": status,
+                "society_ids": society_ids
+            }
         }
-    }
+    else:
+        return {
+            "message": "Registrazione effettuata. In attesa di approvazione.",
+            "user": {
+                "id": user_id,
+                "email": user_data.email,
+                "name": user_data.name,
+                "role": user_data.role,
+                "status": status
+            }
+        }
 
 @api_router.post("/auth/login")
 async def login(login_data: UserLogin):
