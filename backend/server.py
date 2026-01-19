@@ -257,7 +257,7 @@ async def register(user_data: UserRegister):
     await db.users.insert_one(user_doc)
     
     # If approved, generate token
-    if status == UserStatus.APPROVED:
+    if user_status == UserStatus.APPROVED:
         token = create_jwt_token(user_id, user_data.email, user_data.role)
         return {
             "token": token,
